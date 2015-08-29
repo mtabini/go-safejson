@@ -16,7 +16,7 @@ import (
 	"reflect"
 )
 
-// Interface Marshaler allows an object to provide its own serialized version of itself
+// Marshaler allows an object to provide its own serialized version of itself
 type Marshaler interface {
 	SafeMarshal() (interface{}, error)
 }
