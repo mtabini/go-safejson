@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"time"
 )
 
 // Marshaler allows an object to provide its own serialized version of itself
@@ -57,7 +58,11 @@ func marshal(v reflect.Value) (interface{}, error) {
 				tag := f.Tag.Get("safejson")
 
 				if tag != "" {
-					if result[tag], err = marshal(v.Field(index)); err != nil {
+					val := v.Field(index)
+
+					if tt, ok := val.Interface().(time.Time); ok {
+						result[tag] = tt
+					} else if result[tag], err = marshal(v.Field(index)); err != nil {
 						return nil, err
 					}
 				}
