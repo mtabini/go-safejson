@@ -13,6 +13,7 @@ package safejson
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"reflect"
 	"time"
 )
@@ -24,14 +25,21 @@ type Marshaler interface {
 
 var marshalerInterface = reflect.TypeOf((*Marshaler)(nil)).Elem()
 
-func marshal(v reflect.Value) (interface{}, error) {
+func filter(v reflect.Value) (interface{}, error) {
 	k := v.Kind()
 
 	if k == reflect.Invalid {
 		return nil, nil
 	}
 
-	if k == reflect.Ptr {
+	log.Println("\n\n>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<\n\n")
+
+	log.Printf("BEFORE %#v", v.Interface())
+	log.Printf("IS PTR %#v", k == reflect.Interface)
+
+	for k == reflect.Ptr || k == reflect.Interface {
+		log.Println("PTR")
+
 		if v.IsNil() {
 			return nil, nil
 		}
@@ -41,10 +49,15 @@ func marshal(v reflect.Value) (interface{}, error) {
 		}
 
 		v = v.Elem()
+		k = v.Kind()
 	}
 
-	switch v.Kind() {
-	case reflect.Struct:
+	log.Printf("AFTER %#v", v.Interface())
+	log.Printf("TYPE %#v", v.Kind())
+
+	switch k {
+	case reflect.Struct, reflect.Interface:
+		log.Println("HERE")
 		result := map[string]interface{}{}
 
 		t := v.Type()
@@ -62,7 +75,7 @@ func marshal(v reflect.Value) (interface{}, error) {
 
 					if tt, ok := val.Interface().(time.Time); ok {
 						result[tag] = tt
-					} else if result[tag], err = marshal(v.Field(index)); err != nil {
+					} else if result[tag], err = filter(v.Field(index)); err != nil {
 						return nil, err
 					}
 				}
@@ -77,7 +90,7 @@ func marshal(v reflect.Value) (interface{}, error) {
 		var err error
 
 		for index := 0; index < length; index++ {
-			if result[index], err = marshal(v.Index(index)); err != nil {
+			if result[index], err = filter(v.Index(index)); err != nil {
 				return nil, err
 			}
 		}
@@ -86,6 +99,11 @@ func marshal(v reflect.Value) (interface{}, error) {
 	}
 
 	return v.Interface(), nil
+}
+
+// Filter marshals a value but does not convert it to []byte
+func Filter(v interface{}) (interface{}, error) {
+	return filter(reflect.ValueOf(v))
 }
 
 // Marshal converts the provided value to its “safe” JSON representation.
@@ -105,7 +123,7 @@ func Marshal(i interface{}) ([]byte, error) {
 		return nil, errors.New("Values passed to Marshal must be instances of struct, slice, or array, or conform to the Marshaler interface")
 	}
 
-	if result, err := marshal(v); err == nil {
+	if result, err := filter(v); err == nil {
 		return json.Marshal(result)
 	} else {
 		return nil, err
