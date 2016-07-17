@@ -13,7 +13,6 @@ package safejson
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"reflect"
 	"time"
 )
@@ -32,14 +31,7 @@ func filter(v reflect.Value) (interface{}, error) {
 		return nil, nil
 	}
 
-	log.Println("\n\n>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<\n\n")
-
-	log.Printf("BEFORE %#v", v.Interface())
-	log.Printf("IS PTR %#v", k == reflect.Interface)
-
 	for k == reflect.Ptr || k == reflect.Interface {
-		log.Println("PTR")
-
 		if v.IsNil() {
 			return nil, nil
 		}
@@ -52,12 +44,8 @@ func filter(v reflect.Value) (interface{}, error) {
 		k = v.Kind()
 	}
 
-	log.Printf("AFTER %#v", v.Interface())
-	log.Printf("TYPE %#v", v.Kind())
-
 	switch k {
 	case reflect.Struct, reflect.Interface:
-		log.Println("HERE")
 		result := map[string]interface{}{}
 
 		t := v.Type()
