@@ -32,8 +32,6 @@ func filter(v reflect.Value) (interface{}, error) {
 		return nil, nil
 	}
 
-	log.Printf("%#v", v.Type().Kind() == reflect.Struct)
-
 	for k == reflect.Ptr || k == reflect.Interface {
 		if v.IsNil() {
 			return nil, nil
