@@ -13,7 +13,6 @@ package safejson
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"reflect"
 	"time"
 )
