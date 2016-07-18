@@ -13,6 +13,7 @@ package safejson
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"reflect"
 	"time"
 )
@@ -30,6 +31,8 @@ func filter(v reflect.Value) (interface{}, error) {
 	if k == reflect.Invalid {
 		return nil, nil
 	}
+
+	log.Printf("%#v", v.Type().Kind() == reflect.Struct)
 
 	for k == reflect.Ptr || k == reflect.Interface {
 		if v.IsNil() {
@@ -90,16 +93,10 @@ func filter(v reflect.Value) (interface{}, error) {
 }
 
 // Filter marshals a value but does not convert it to []byte
-func Filter(v interface{}) (interface{}, error) {
-	return filter(reflect.ValueOf(v))
-}
-
-// Marshal converts the provided value to its “safe” JSON representation.
-//
-// The root value passed to the function must be a struct, slice, or array, or conform to the
-// Marshaler interface, or the marshaling operation fails and an error is returned.
-func Marshal(i interface{}) ([]byte, error) {
+func Filter(i interface{}) (interface{}, error) {
 	v := reflect.ValueOf(i)
+
+	vv := v
 
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -111,7 +108,15 @@ func Marshal(i interface{}) ([]byte, error) {
 		return nil, errors.New("Values passed to Marshal must be instances of struct, slice, or array, or conform to the Marshaler interface")
 	}
 
-	if result, err := filter(v); err == nil {
+	return filter(vv)
+}
+
+// Marshal converts the provided value to its “safe” JSON representation.
+//
+// The root value passed to the function must be a struct, slice, or array, or conform to the
+// Marshaler interface, or the marshaling operation fails and an error is returned.
+func Marshal(i interface{}) ([]byte, error) {
+	if result, err := Filter(i); err == nil {
 		return json.Marshal(result)
 	} else {
 		return nil, err
